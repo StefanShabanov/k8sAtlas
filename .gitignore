@@ -2,9 +2,10 @@
 *.tfstate
 *.tfstate.*
 **/.terraform/*
-.terraform.lock.hcl
+# .terraform.lock.hcl - DO NOT IGNORE! Commit this file to ensure consistent provider versions
 *.tfvars
 terraform.tfvars
+!*.tfvars.example
 crash.log
 crash.*.log
 override.tf
