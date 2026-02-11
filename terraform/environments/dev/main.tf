@@ -221,7 +221,7 @@ module "gke" {
       min_count          = var.workload_node_pool_min_count
       max_count          = var.workload_node_pool_max_count
       local_ssd_count    = 0
-      spot               = var.enable_preemptible_nodes
+      spot               = var.enable_preemptible_nodes  # use spot VMs for cost savings
       disk_size_gb       = var.node_disk_size_gb
       disk_type          = var.node_disk_type
       image_type         = "COS_CONTAINERD"
@@ -230,7 +230,7 @@ module "gke" {
       auto_repair        = true
       auto_upgrade       = true
       service_account    = google_service_account.gke_nodes.email
-      preemptible        = var.enable_preemptible_nodes
+      preemptible        = false  #using spot instead
       initial_node_count = var.workload_node_pool_min_count
     }
   ]

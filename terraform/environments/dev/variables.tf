@@ -219,7 +219,7 @@ variable "enable_autopilot" {
 }
 
 variable "enable_preemptible_nodes" {
-  description = "Use preemptible VMs for workload node pool (significant cost savings)"
+  description = "Use Spot VMs for workload node pool (up to 80% cost savings, can be terminated)"
   type        = bool
   default     = false # Can enable for non-critical dev workloads
 }
