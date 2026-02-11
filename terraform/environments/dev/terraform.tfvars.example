@@ -1,0 +1,141 @@
+# Example Terraform Variables for k8sAtlas Development Environment
+#
+# Copy this file to terraform.tfvars and update with your actual values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# IMPORTANT: terraform.tfvars is in .gitignore - never commit it to Git!
+
+#############################################
+# Project Configuration (REQUIRED)
+#############################################
+
+# Your GCP project ID
+project_id = "sshabanov"
+
+# Primary region for resources
+region = "europe-west4" # Netherlands - good balance of cost and latency
+
+# Availability zones within the region
+zones = ["europe-west4-a", "europe-west4-b", "europe-west4-c"]
+
+#############################################
+# Environment & Naming
+#############################################
+
+environment  = "dev"
+cluster_name = "k8satlas-gke"
+
+#############################################
+# Network Configuration
+#############################################
+
+# VPC network name
+network_name = "k8satlas-vpc"
+
+# IP ranges (defaults are usually fine)
+subnet_ip_range        = "10.0.0.0/20"  # Nodes
+pods_ip_range          = "10.4.0.0/14"  # Pods (large range)
+services_ip_range      = "10.8.0.0/20"  # Services
+master_ipv4_cidr_block = "172.16.0.0/28" # GKE control plane
+
+#############################################
+# Cluster Configuration
+#############################################
+
+# Kubernetes version
+kubernetes_version = "latest" # Or pin to specific version: "1.28.5-gke.1217000"
+release_channel    = "REGULAR" # RAPID, REGULAR, or STABLE
+
+# Private cluster settings
+enable_private_endpoint = false # Set to true for fully private (requires VPN/bastion)
+enable_private_nodes    = true  # Nodes have no public IPs
+
+# Master authorized networks - IPs/ranges that can access the API server
+# Empty list = only accessible from within the VPC
+# Add your office/home IP for kubectl access if enable_private_endpoint = false
+master_authorized_networks = [
+  # Example: Allow access from your home/office
+  # {
+  #   cidr_block   = "YOUR_PUBLIC_IP/32"
+  #   display_name = "Home/Office"
+  # }
+]
+
+#############################################
+# Node Pool Configuration
+#############################################
+
+# System Node Pool (for platform services like ingress, monitoring)
+system_node_pool_machine_type = "e2-small" # 2 vCPU, 2 GB RAM
+system_node_pool_min_count    = 1
+system_node_pool_max_count    = 3
+
+# Workload Node Pool (for your applications)
+workload_node_pool_machine_type = "e2-medium" # 2 vCPU, 4 GB RAM
+workload_node_pool_min_count    = 1
+workload_node_pool_max_count    = 5
+
+# Node disk configuration
+node_disk_size_gb = 50           # GB per node
+node_disk_type    = "pd-balanced" # pd-standard, pd-balanced, or pd-ssd
+
+#############################################
+# Security & Features
+#############################################
+
+enable_workload_identity    = true  # Recommended for secure GCP service access
+enable_network_policy       = true  # Enable Kubernetes network policies
+enable_binary_authorization = false # Can enable later for image signing
+enable_shielded_nodes       = true  # Enhanced security for nodes
+enable_intranode_visibility = true  # Better network monitoring
+
+#############################################
+# Cost Optimization
+#############################################
+
+# Use preemptible VMs for workload pool (up to 80% cost savings)
+# WARNING: Nodes can be terminated at any time - only for non-critical workloads
+enable_preemptible_nodes = false
+
+#############################################
+# Maintenance
+#############################################
+
+# Maintenance window (UTC time)
+maintenance_start_time = "03:00"              # 3 AM UTC
+maintenance_recurrence = "FREQ=WEEKLY;BYDAY=SU" # Every Sunday
+
+#############################################
+# Labels & Tags
+#############################################
+
+cluster_labels = {
+  managed_by  = "terraform"
+  project     = "k8satlas"
+  environment = "dev"
+  owner       = "your-name" # Add your name or team
+}
+
+node_labels = {
+  managed_by = "terraform"
+}
+
+node_tags = ["gke-node", "k8satlas"]
+
+#############################################
+# Cost Estimation
+#############################################
+
+# With default settings (e2-small + e2-medium, no preemptible):
+# - 2x e2-small (system pool): ~$30/month
+# - 1x e2-medium (workload pool): ~$25/month
+# - Cloud NAT: ~$35/month
+# - Load Balancer (added in Phase 2): ~$20/month
+# - Persistent Disks: ~$10/month
+# TOTAL: ~$120-150/month for dev environment
+#
+# To reduce costs:
+# 1. Set enable_preemptible_nodes = true (saves ~50% on workload pool)
+# 2. Use smaller machine types
+# 3. Reduce max_count for autoscaling
+# 4. Run 'terraform destroy' when not actively developing
