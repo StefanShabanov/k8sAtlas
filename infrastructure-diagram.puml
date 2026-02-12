@@ -1,0 +1,75 @@
+@startuml k8sAtlas Infrastructure
+!define RECTANGLE class
+
+' Minimal styling
+skinparam backgroundColor #FFFFFF
+skinparam defaultTextAlignment center
+skinparam shadowing false
+skinparam rectangleBorderThickness 2
+skinparam rectangleFontSize 11
+
+title k8sAtlas GKE Infrastructure
+
+' GCP Project
+package "GCP Project" {
+
+    ' Region
+    package "Region: europe-west4 (Netherlands)" {
+
+        ' VPC Network
+        rectangle "VPC Network\nk8satlas-vpc\n10.0.0.0/20" as vpc {
+
+            ' Cloud NAT
+            rectangle "Cloud NAT\n(Egress Gateway)" as nat
+
+            ' Subnets
+            rectangle "Subnets\n━━━━━━━━━━━\nNodes: 10.0.0.0/20\nPods: 10.4.0.0/14\nServices: 10.8.0.0/20" as subnets
+
+            ' GKE Cluster
+            rectangle "GKE Cluster: k8satlas-gke-dev\nKubernetes v1.34.3" as gke {
+
+                ' Control Plane
+                rectangle "Control Plane\n━━━━━━━━━━━\nPrivate: 172.16.0.0/28\nWorkload Identity: \nNetwork Policy: " as control_plane
+
+                ' System Node Pool
+                rectangle "System Node Pool\n━━━━━━━━━━━\n3x e2-small (2 vCPU, 2GB)\nMin: 1, Max: 3\nZones: a, b, c" as system_pool
+
+                ' Workload Node Pool
+                rectangle "Workload Node Pool\n━━━━━━━━━━━\n3x e2-small Spot VMs\nMin: 1, Max: 3\nZones: a, b, c" as workload_pool
+            }
+        }
+
+        ' Terraform State Storage
+        database "Cloud Storage\nTerraform State\n(versioned + encrypted)" as gcs
+    }
+}
+
+' External Connections
+cloud "Internet" as internet
+
+' Relationships
+internet --> nat : Egress
+nat -down-> subnets
+subnets -down-> gke
+control_plane -down-> system_pool
+control_plane -down-> workload_pool
+
+' Notes
+note right of gke
+  **Cluster Status:**
+  • 6 nodes (all Ready)
+  • Private nodes (no public IPs)
+  • Shielded nodes enabled
+  • ADVANCED_DATAPATH (Cilium)
+
+  **Cost:** ~$128/month
+end note
+
+note left of gcs
+  **State Backend:**
+  • Versioning enabled
+  • Encryption at rest
+  • IAM access control
+end note
+
+@enduml
