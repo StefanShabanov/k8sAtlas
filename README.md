@@ -16,51 +16,11 @@ k8sAtlas is a fully-automated Kubernetes infrastructure project built with Terra
 - **Security hardening** - Network policies, RBAC, secrets management
 - **Real application** - Go REST API with database integration
 
-This is not a toy project. It's a production-ready platform that could be forked and used as a foundation for real applications.
-
 ## Architecture
 
 ### Infrastructure Diagram
 
 ![k8sAtlas Infrastructure](infrastructure-diagram.png)
-
-*Current deployment: Phase 0 (Bootstrap) & Phase 1 (Core Infrastructure)*
-
-**To generate/update the diagram:**
-```bash
-bash scripts/generate-diagram.sh
-```
-
-### Traffic Flow (Phase 2+)
-
-```
-Internet → Cloudflare CDN → GCP Load Balancer → NGINX Ingress → Services → Pods
-```
-
-### Current Components (Phase 0-1)
-
-**✅ Deployed:**
-- **VPC Network**: Custom networking (10.0.0.0/20) with separate ranges for pods and services
-- **Private GKE Cluster**: 6 nodes (3 system + 3 workload Spot VMs)
-  - Kubernetes v1.34.3
-  - Workload Identity enabled
-  - Network policies (Cilium)
-  - Shielded nodes
-- **Cloud NAT**: Enables egress for private nodes
-- **Cloud Storage**: Terraform state backend
-- **Cost**: ~$128/month
-
-**🔜 Phase 2 (Ready to Deploy):**
-- **NGINX Ingress Controller**: GCP LoadBalancer integration
-- **Cert-Manager**: Automatic TLS certificates via Let's Encrypt
-- **Cloudflare Integration**: DNS management and CDN
-- **Additional Cost**: +$23-28/month
-
-**📋 Future Phases:**
-- **Phase 3**: Application deployment (Go REST API)
-- **Phase 4**: Observability (Prometheus, Grafana, Loki)
-- **Phase 5**: Security hardening
-- **Phase 6**: CI/CD pipeline
 
 ## Repository Structure
 
