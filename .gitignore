@@ -37,6 +37,10 @@ credentials.json
 service-account*.json
 gcp-credentials.json
 
+# Kubernetes secrets (keep .example files)
+*-secret.yaml
+!*-secret.yaml.example
+
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json
