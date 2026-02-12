@@ -1,0 +1,111 @@
+# Cert-Manager Helm Values
+# Official chart: https://github.com/cert-manager/cert-manager
+#
+# Automatically manages TLS certificates from Let's Encrypt
+# Uses Cloudflare DNS-01 challenge for wildcard certificates
+
+# Install CRDs with the chart
+installCRDs: true
+
+# Number of replicas
+replicaCount: 1
+
+# Resource limits
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# Prometheus metrics
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: false  # Will enable in Phase 4
+
+# Webhook component
+webhook:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 50m
+      memory: 64Mi
+
+# CA Injector component
+cainjector:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 50m
+      memory: 64Mi
+
+# Startup API check
+startupapicheck:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 50m
+      memory: 64Mi
+
+# Node affinity - prefer system-pool nodes
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: pool_type
+          operator: In
+          values:
+          - system
+
+# Tolerations for system nodes
+tolerations:
+- key: "system-node"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+# RBAC
+rbac:
+  create: true
+
+# Service Account
+serviceAccount:
+  create: true
+  name: cert-manager
+
+# Global configuration
+global:
+  # Log level (0-6, 2 is default)
+  logLevel: 2
+
+  # Leader election namespace
+  leaderElection:
+    namespace: cert-manager

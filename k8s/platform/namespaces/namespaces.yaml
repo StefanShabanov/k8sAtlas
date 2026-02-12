@@ -1,0 +1,47 @@
+# Kubernetes Namespaces for k8sAtlas
+# Creates four namespaces for different workload types
+#
+# platform:    Platform services (ingress, cert-manager, etc.)
+# monitoring:  Observability stack (prometheus, grafana, loki)
+# production:  Production application workloads
+# staging:     Staging/testing application workloads
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform
+  labels:
+    name: platform
+    managed-by: kubectl
+    environment: shared
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    name: monitoring
+    managed-by: kubectl
+    environment: shared
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    name: production
+    managed-by: kubectl
+    environment: production
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    name: staging
+    managed-by: kubectl
+    environment: staging

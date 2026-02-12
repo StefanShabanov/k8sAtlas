@@ -1,0 +1,153 @@
+# NGINX Ingress Controller Helm Values
+# Official chart: https://github.com/kubernetes/ingress-nginx
+#
+# Configured for:
+# - GCP Cloud Load Balancer integration
+# - Cloudflare proxy compatibility
+# - Prometheus metrics
+# - System node pool affinity
+
+controller:
+  # Service configuration
+  service:
+    type: LoadBalancer
+    annotations:
+      # GCP-specific annotations
+      cloud.google.com/load-balancer-type: "External"
+      # Note: To use a static IP, add after creation:
+      # cloud.google.com/load-balancer-ip: "YOUR_STATIC_IP"
+
+    # External traffic policy
+    externalTrafficPolicy: Local
+
+    # Session affinity for better performance
+    sessionAffinity: ClientIP
+
+  # Resource limits for ingress controller
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Autoscaling
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  # Metrics for monitoring (Phase 4)
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: false  # Will enable in Phase 4 when Prometheus is deployed
+
+  # Prometheus annotations
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "10254"
+
+  # Configuration for Cloudflare compatibility
+  config:
+    # Enable forwarded headers from Cloudflare proxy
+    use-forwarded-headers: "true"
+    compute-full-forwarded-for: "true"
+
+    # Proxy protocol - false for Cloudflare
+    use-proxy-protocol: "false"
+
+    # Real IP from X-Forwarded-For header
+    enable-real-ip: "true"
+
+    # Cloudflare IP ranges (for real IP detection)
+    # Update this list periodically from: https://www.cloudflare.com/ips/
+    proxy-real-ip-cidr: "173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22"
+
+    # SSL settings
+    ssl-protocols: "TLSv1.2 TLSv1.3"
+    ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+
+    # Performance
+    worker-processes: "2"
+    max-worker-connections: "16384"
+
+    # Security headers
+    hide-headers: "Server,X-Powered-By"
+
+    # Timeouts
+    keep-alive: "75"
+    proxy-connect-timeout: "60"
+    proxy-send-timeout: "60"
+    proxy-read-timeout: "60"
+
+  # Node affinity - prefer system-pool nodes
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: pool_type
+            operator: In
+            values:
+            - system
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - ingress-nginx
+          topologyKey: kubernetes.io/hostname
+
+  # Tolerations for system nodes
+  tolerations:
+  - key: "system-node"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Default backend (optional 404 service)
+defaultBackend:
+  enabled: true
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 50m
+      memory: 32Mi
+
+  # Node affinity
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: pool_type
+            operator: In
+            values:
+            - system
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# RBAC
+rbac:
+  create: true
+
+# Service Account
+serviceAccount:
+  create: true
+  name: ingress-nginx

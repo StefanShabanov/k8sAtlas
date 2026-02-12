@@ -1,0 +1,74 @@
+# LimitRanges for Namespaces
+# Sets default resource limits for containers that don't specify them
+# Prevents resource hogging and establishes baseline resource allocation
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: production
+spec:
+  limits:
+  - default:
+      # Default limits if not specified
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      # Default requests if not specified
+      cpu: 100m
+      memory: 128Mi
+    max:
+      # Maximum allowed
+      cpu: "2"
+      memory: 4Gi
+    min:
+      # Minimum required
+      cpu: 10m
+      memory: 16Mi
+    type: Container
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: staging
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 100m
+      memory: 128Mi
+    max:
+      cpu: "2"
+      memory: 4Gi
+    min:
+      cpu: 10m
+      memory: 16Mi
+    type: Container
+
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default-limits
+  namespace: monitoring
+spec:
+  limits:
+  - default:
+      # Monitoring components may need more resources
+      cpu: "1"
+      memory: 1Gi
+    defaultRequest:
+      cpu: 100m
+      memory: 256Mi
+    max:
+      cpu: "4"
+      memory: 8Gi
+    min:
+      cpu: 10m
+      memory: 32Mi
+    type: Container
